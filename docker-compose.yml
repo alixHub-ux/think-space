@@ -1,0 +1,22 @@
+services:
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: think-space-api
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama-3.3-70b-versatile
+    restart: always
+    
+  # Frontend Web
+  frontend:
+    image: nginx:alpine
+    container_name: think-space-web
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
