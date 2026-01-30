@@ -7,34 +7,48 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+        }
 
         .light-mode {
             background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%);
             color: #1b4332;
         }
         .light-mode .glass-card {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(27, 67, 50, 0.05);
+            box-shadow: 0 -4px 24px rgba(27, 67, 50, 0.08);
         }
         .light-mode .accent-text { color: #2d6a4f; }
         .light-mode .btn-primary { background: #40916c; color: white; }
-        .light-mode .message-user { background: rgba(64, 145, 108, 0.1); border-left: 3px solid #40916c; }
-        .light-mode .message-ai { background: rgba(45, 106, 79, 0.05); border-left: 3px solid #2d6a4f; }
+        
+        .light-mode .message-user { 
+            background: linear-gradient(135deg, rgba(64, 145, 108, 0.08) 0%, rgba(64, 145, 108, 0.12) 100%);
+            border-right: 2px solid rgba(64, 145, 108, 0.3);
+        }
+        .light-mode .message-ai { 
+            background: linear-gradient(135deg, rgba(45, 106, 79, 0.05) 0%, rgba(45, 106, 79, 0.08) 100%);
+            border-left: 2px solid rgba(45, 106, 79, 0.25);
+        }
 
         .dark-mode {
             background: radial-gradient(circle at top, #132a13 0%, #051005 100%);
             color: #ecf3ee;
         }
         .dark-mode .glass-card {
-            background: rgba(13, 26, 13, 0.6);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            background: rgba(13, 26, 13, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
         }
         .dark-mode .accent-text { color: #95d5b2; }
         .dark-mode .btn-primary { 
@@ -42,12 +56,70 @@
             border: 1px solid rgba(149, 213, 178, 0.2);
             color: #d8f3dc;
         }
-        .dark-mode .message-user { background: rgba(45, 106, 79, 0.2); border-left: 3px solid #95d5b2; }
-        .dark-mode .message-ai { background: rgba(13, 26, 13, 0.4); border-left: 3px solid #40916c; }
+        
+        .dark-mode .message-user { 
+            background: linear-gradient(135deg, rgba(45, 106, 79, 0.15) 0%, rgba(45, 106, 79, 0.20) 100%);
+            border-right: 2px solid rgba(149, 213, 178, 0.3);
+        }
+        .dark-mode .message-ai { 
+            background: linear-gradient(135deg, rgba(13, 26, 13, 0.4) 0%, rgba(13, 26, 13, 0.6) 100%);
+            border-left: 2px solid rgba(64, 145, 108, 0.4);
+        }
+
+        .messages-container {
+            min-height: 100vh;
+            padding: 2rem 1rem 200px 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem;
+        }
+
+        .message-user {
+            max-width: 60%;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            margin-left: auto;
+            margin-right: 10%;
+            padding: 1.5rem 2rem;
+            border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+            animation: slideInRight 0.5s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-ai {
+            max-width: 60%;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            margin-left: 10%;
+            margin-right: auto;
+            padding: 1.5rem 2rem;
+            border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+            animation: slideInLeft 0.5s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
 
         .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .hover-lift:hover { transform: translateY(-3px); }
-        
+        .hover-lift:hover { transform: translateY(-2px); }
+
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -58,107 +130,319 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #40916c; border-radius: 10px; }
 
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .header-section {
+            text-align: center;
+            padding: 4rem 2rem 3rem;
+            transition: all 0.3s ease;
         }
 
-        .message-user, .message-ai {
-            margin-bottom: 1rem;
-            padding: 1rem 1.5rem;
-            border-radius: 1rem;
-            animation: slideIn 0.3s ease-out;
+        .header-hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            height: 0;
+            padding: 0;
+            margin: 0;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #40916c;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
 
-        .chat-history {
-            max-height: 500px;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            padding: 2rem;
             overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            max-width: 1400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .roadmap-canvas {
+            position: relative;
+            min-height: 600px;
+            padding: 3rem;
+        }
+
+        .roadmap-node {
+            position: absolute;
+            padding: 1.25rem 1.75rem;
+            border-radius: 1rem;
+            min-width: 200px;
+            max-width: 280px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: nodeAppear 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .roadmap-node:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        @keyframes nodeAppear {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .roadmap-node.phase-ideation {
+            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+            border: 2px solid #a855f7;
+        }
+
+        .roadmap-node.phase-mvp {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: 2px solid #3b82f6;
+        }
+
+        .roadmap-node.phase-beta {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: 2px solid #fbbf24;
+        }
+
+        .roadmap-node.phase-scaling {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 2px solid #34d399;
+        }
+
+        .roadmap-node.phase-development {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            border: 2px solid #22d3ee;
+        }
+
+        .roadmap-node.phase-launch {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            border: 2px solid #f472b6;
+        }
+
+        .node-number {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #1b4332;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .node-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .node-desc {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+        }
+
+        .node-phase-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        .roadmap-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .connection-line {
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+            opacity: 0.6;
+            animation: dash 20s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -1000; }
+        }
+
+        .btn-roadmap {
+            position: fixed;
+            bottom: 120px;
+            right: 2rem;
+            z-index: 150;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
     </style>
 </head>
-<body class="dark-mode min-h-screen flex flex-col items-center p-6 md:p-12">
+<body class="dark-mode custom-scrollbar">
 
-    <button onclick="toggleTheme()" class="fixed top-8 right-8 w-12 h-12 rounded-full glass-card flex items-center justify-center text-xl z-50 hover-lift">
+    <button onclick="toggleTheme()" class="fixed top-6 right-6 w-12 h-12 rounded-full glass-card flex items-center justify-center text-xl z-50 hover-lift">
         <i class="fa-solid fa-moon" id="themeIcon"></i>
     </button>
 
-    <div class="max-w-3xl w-full space-y-12 relative">
-        <div class="absolute -top-20 -left-20 w-64 h-64 bg-green-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <button onclick="generateRoadmap()" id="roadmapBtn" class="btn-roadmap glass-card px-6 py-3 rounded-full font-semibold flex items-center gap-2 hover-lift shadow-2xl" style="display: none;">
+        <i class="fa-solid fa-route text-green-400"></i>
+        <span class="text-sm">Générer Roadmap</span>
+    </button>
+
+    <div class="messages-container" id="messagesContainer">
         
-        <div class="text-center space-y-4 animate-float">
-            <h1 class="text-6xl font-extrabold tracking-tighter">
-                Think<span class="accent-text">Space</span>
-            </h1>
-            <p class="text-lg opacity-60 font-light">L'intelligence artificielle au service de vos idées les plus folles.</p>
-        </div>
-
-        <!-- HISTORIQUE DES MESSAGES -->
-        <div id="chatHistory" class="hidden glass-card rounded-[2rem] p-6 chat-history custom-scrollbar space-y-3">
-            <!-- Les messages s'afficheront ici -->
-        </div>
-
-        <div class="glass-card p-2 rounded-[2rem] shadow-2xl">
-            <div class="p-6 space-y-4">
-                <textarea 
-                    id="userInput" 
-                    class="w-full bg-transparent border-none focus:ring-0 text-lg custom-scrollbar resize-none"
-                    rows="5"
-                    placeholder="Quel est votre prochain grand projet ?"
-                ></textarea>
-                
-                <div class="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div class="flex items-center gap-4">
-                        <span class="text-xs opacity-40"><i class="fa-regular fa-keyboard mr-2"></i>Ctrl + Entrée pour lancer</span>
-                        <button 
-                            onclick="clearConversation()" 
-                            class="text-xs opacity-40 hover:opacity-80 hover:text-red-400 transition-all"
-                            title="Nouvelle conversation"
-                        >
-                            <i class="fa-solid fa-broom mr-1"></i>Réinitialiser
-                        </button>
-                    </div>
-                    <button 
-                        onclick="sendToAI()" 
-                        id="btn"
-                        class="btn-primary px-8 py-3 rounded-2xl font-semibold flex items-center gap-3 hover-lift shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span id="btnText">Brainstormer</span>
-                        <i class="fa-solid fa-wand-magic-sparkles" id="btnIcon"></i>
-                    </button>
-                </div>
+        <div class="header-section" id="headerSection">
+            <div class="absolute top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-green-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+            
+            <div class="space-y-4 animate-float relative z-10">
+                <h1 class="text-7xl font-extrabold tracking-tighter">
+                    Think<span class="accent-text">Space</span>
+                </h1>
+                <p class="text-xl opacity-60 font-light max-w-2xl mx-auto">
+                    L'intelligence artificielle au service de vos idées les plus audacieuses.
+                </p>
+                <p class="text-sm opacity-40 mt-4">
+                    <i class="fa-solid fa-lightbulb mr-2"></i>
+                    Posez votre question pour commencer...
+                </p>
             </div>
         </div>
 
-        <div id="loadingIndicator" class="hidden flex justify-center">
-            <div class="glass-card px-8 py-4 rounded-full flex items-center gap-4">
-                <div class="flex gap-1">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+        <div id="chatMessages" class="w-full flex flex-col">
+        </div>
+
+    </div>
+
+    <div class="input-fixed-bottom">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card rounded-3xl shadow-2xl">
+                <div class="p-4">
+                    <textarea 
+                        id="userInput" 
+                        class="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-lg resize-none"
+                        rows="2"
+                        placeholder="Quel est votre prochain grand projet ?"
+                    ></textarea>
+                    
+                    <div class="flex items-center justify-between pt-3 border-t border-white/10 mt-3">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs opacity-40">
+                                <i class="fa-regular fa-keyboard mr-1"></i>
+                                Ctrl + Entrée
+                            </span>
+                            <button 
+                                onclick="clearConversation()" 
+                                class="text-xs opacity-40 hover:opacity-100 hover:text-red-400 transition-all flex items-center gap-1"
+                            >
+                                <i class="fa-solid fa-broom"></i>
+                                Réinitialiser
+                            </button>
+                        </div>
+                        <button 
+                            onclick="sendToAI()" 
+                            id="btn"
+                            class="btn-primary px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover-lift shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            <span id="btnText">Envoyer</span>
+                            <i class="fa-solid fa-paper-plane" id="btnIcon"></i>
+                        </button>
+                    </div>
                 </div>
-                <span class="text-sm font-medium">L'IA tisse des liens...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="roadmapModal" class="modal">
+        <div class="modal-content glass-card rounded-3xl">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-inherit z-10 rounded-t-3xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-route text-3xl text-green-400"></i>
+                    <div>
+                        <h2 class="text-2xl font-bold">Roadmap d'Exécution</h2>
+                        <p class="text-sm opacity-60">Plan stratégique généré par l'IA</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <!-- <button onclick="exportRoadmapPDF()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-all hover-lift">
+                        <i class="fa-solid fa-download"></i>
+                        Export PDF
+                    </button> -->
+                    <button onclick="closeRoadmap()" class="px-4 py-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="roadmapContent" class="roadmap-canvas">
             </div>
         </div>
     </div>
 
     <script>
         let isDarkMode = true;
-        let sessionId = null; // Identifiant de session unique
+        let sessionId = null;
+        let isTyping = false;
+        let conversationHistory = [];
 
-        // Générer un ID de session au chargement
         function generateSessionId() {
             return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        // Initialiser la session
         sessionId = generateSessionId();
-        console.log('🆔 Session ID:', sessionId);
 
         function toggleTheme() {
             const body = document.body;
@@ -171,32 +455,126 @@
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
         }
 
-        // Afficher un message dans l'historique
-        function addMessageToHistory(content, isUser = true) {
-            const historyDiv = document.getElementById('chatHistory');
-            historyDiv.classList.remove('hidden');
+        function hideHeader() {
+            const header = document.getElementById('headerSection');
+            if (header && !header.classList.contains('header-hidden')) {
+                header.classList.add('header-hidden');
+            }
+        }
 
+        function showRoadmapButton() {
+            const btn = document.getElementById('roadmapBtn');
+            if (conversationHistory.length >= 2) {
+                btn.style.display = 'flex';
+            }
+        }
+
+        function addUserMessage(content) {
+            hideHeader();
+            conversationHistory.push({ role: 'user', content });
+            showRoadmapButton();
+            
+            const chatDiv = document.getElementById('chatMessages');
+            
             const messageDiv = document.createElement('div');
-            messageDiv.className = isUser ? 'message-user' : 'message-ai';
-            
-            const icon = isUser 
-                ? '<i class="fa-solid fa-user text-green-500 mr-2"></i>' 
-                : '<i class="fa-solid fa-robot text-green-400 mr-2"></i>';
-            
+            messageDiv.className = 'message-user';
             messageDiv.innerHTML = `
-                <div class="flex items-start gap-2">
-                    ${icon}
-                    <div class="flex-1 whitespace-pre-wrap">${content}</div>
+                <div class="flex items-start gap-3">
+                    <div class="flex-1 pt-1">
+                        <div class="font-semibold text-sm opacity-60 mb-1 text-right">Vous</div>
+                        <div class="whitespace-pre-wrap leading-relaxed">${content}</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-user text-green-500 text-sm"></i>
+                    </div>
                 </div>
             `;
             
-            historyDiv.appendChild(messageDiv);
-            
-            // Scroll automatique vers le bas
-            historyDiv.scrollTop = historyDiv.scrollHeight;
+            chatDiv.appendChild(messageDiv);
+            scrollToBottom();
         }
 
-        // Ecouteur pour Ctrl + Entrée
+        async function addAIMessageTyping(content) {
+            hideHeader();
+            conversationHistory.push({ role: 'assistant', content });
+            showRoadmapButton();
+            
+            const chatDiv = document.getElementById('chatMessages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-ai';
+            messageDiv.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-robot text-green-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 pt-1">
+                        <div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div>
+                        <div class="whitespace-pre-wrap leading-relaxed" id="typingContent"></div>
+                    </div>
+                </div>
+            `;
+            
+            chatDiv.appendChild(messageDiv);
+            
+            const typingContent = messageDiv.querySelector('#typingContent');
+            let index = 0;
+            const speed = 15;
+            
+            return new Promise((resolve) => {
+                function typeChar() {
+                    if (index < content.length) {
+                        typingContent.textContent += content.charAt(index);
+                        index++;
+                        scrollToBottom();
+                        setTimeout(typeChar, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                typeChar();
+            });
+        }
+
+        function addLoadingIndicator() {
+            hideHeader();
+            const chatDiv = document.getElementById('chatMessages');
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.className = 'message-ai';
+            loadingDiv.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-robot text-green-400 text-sm"></i>
+                    </div>
+                    <div class="flex-1 pt-1">
+                        <div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div>
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatDiv.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        function removeLoadingIndicator() {
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) loading.remove();
+        }
+
+        function scrollToBottom() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
         document.getElementById('userInput').addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
@@ -205,6 +583,8 @@
         });
 
         async function sendToAI() {
+            if (isTyping) return;
+
             const input = document.getElementById('userInput');
             const btn = document.getElementById('btn');
             const btnText = document.getElementById('btnText');
@@ -216,17 +596,14 @@
                 return;
             }
 
-            // Ajouter le message utilisateur à l'historique
-            addMessageToHistory(prompt, true);
-
-            // Vider le champ de saisie
+            addUserMessage(prompt);
             input.value = "";
 
-            // UI Loading State
-            document.getElementById('loadingIndicator').classList.remove('hidden');
             btn.disabled = true;
             btnText.innerText = "Réflexion...";
             btnIcon.className = "fa-solid fa-spinner fa-spin";
+
+            addLoadingIndicator();
 
             try {
                 const response = await fetch('http://localhost:8000/brainstorm', {
@@ -234,7 +611,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         prompt: prompt,
-                        session_id: sessionId  // ← Envoyer l'ID de session
+                        session_id: sessionId
                     })
                 });
 
@@ -242,23 +619,188 @@
 
                 const data = await response.json();
                 
-                // Mettre à jour le session_id si le serveur en renvoie un nouveau
                 if (data.session_id) {
                     sessionId = data.session_id;
                 }
 
-                // Ajouter la réponse de l'IA à l'historique
-                addMessageToHistory(data.response, false);
+                removeLoadingIndicator();
+
+                isTyping = true;
+                await addAIMessageTyping(data.response);
+                isTyping = false;
 
             } catch (e) {
+                removeLoadingIndicator();
                 alert("Erreur: Impossible de contacter le serveur. Vérifiez que votre backend tourne sur le port 8000.");
                 console.error(e);
             } finally {
-                document.getElementById('loadingIndicator').classList.add('hidden');
                 btn.disabled = false;
-                btnText.innerText = "Brainstormer";
-                btnIcon.className = "fa-solid fa-wand-magic-sparkles";
+                btnText.innerText = "Envoyer";
+                btnIcon.className = "fa-solid fa-paper-plane";
                 input.focus();
+            }
+        }
+
+        async function generateRoadmap() {
+            if (conversationHistory.length < 2) {
+                alert("Discutez d'abord d'une idée pour générer une roadmap !");
+                return;
+            }
+
+            const context = conversationHistory
+                .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+                .join('\n\n');
+
+            const roadmapPrompt = `Basé sur notre conversation, génère une roadmap d'exécution concrète.
+
+Contexte:
+${context}
+
+Génère EXACTEMENT 6 étapes au format suivant (STRICTEMENT):
+
+STEP_1|Titre court|Phase|Description en 1 phrase|Dépendances séparées par virgule
+STEP_2|Titre court|Phase|Description en 1 phrase|Dépendances séparées par virgule
+...
+
+Phases possibles: Idéation, MVP, Beta, Scaling, Development, Launch
+
+Exemple:
+STEP_1|Validation du concept|Idéation|Étude de marché et interviews utilisateurs|Aucune
+STEP_2|Développement MVP|MVP|Backend API + Interface utilisateur basique|Validation du concept
+STEP_3|Tests utilisateurs|Beta|100 utilisateurs beta testeurs|Développement MVP
+STEP_4|Optimisation|Development|Amélioration basée sur feedback|Tests utilisateurs
+STEP_5|Lancement public|Launch|Campagne marketing et ouverture|Optimisation
+STEP_6|Scaling|Scaling|Expansion géographique|Lancement public
+
+Génère maintenant les 6 étapes pour notre projet:`;
+
+            const modal = document.getElementById('roadmapModal');
+            const content = document.getElementById('roadmapContent');
+            content.innerHTML = '<div class="text-center py-12"><div class="loading-dots mx-auto"><span></span><span></span><span></span></div><p class="mt-4 opacity-60">Génération de la roadmap...</p></div>';
+            modal.classList.add('active');
+
+            try {
+                const response = await fetch('http://localhost:8000/brainstorm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: roadmapPrompt,
+                        session_id: sessionId + '_roadmap'
+                    })
+                });
+
+                if (!response.ok) throw new Error('Erreur serveur');
+
+                const data = await response.json();
+                displayRoadmapGraph(data.response);
+
+            } catch (e) {
+                content.innerHTML = '<div class="text-center py-12 text-red-400"><i class="fa-solid fa-exclamation-triangle text-4xl mb-4"></i><p>Erreur lors de la génération</p></div>';
+                console.error(e);
+            }
+        }
+
+        function displayRoadmapGraph(roadmapText) {
+            const content = document.getElementById('roadmapContent');
+            
+            const lines = roadmapText.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.startsWith('STEP_'));
+
+            const steps = lines.map(line => {
+                const parts = line.split('|');
+                if (parts.length >= 5) {
+                    return {
+                        title: parts[1].trim(),
+                        phase: parts[2].trim(),
+                        desc: parts[3].trim(),
+                        deps: parts[4].trim()
+                    };
+                }
+                return null;
+            }).filter(s => s !== null);
+
+            if (steps.length === 0) {
+                content.innerHTML = '<div class="text-center py-12 text-yellow-400"><p>L\'IA n\'a pas retourné le format attendu. Réessayez.</p></div>';
+                return;
+            }
+
+            const positions = [
+                { x: 100, y: 50 },  { x: 500, y: 50 },
+                { x: 100, y: 300 }, { x: 500, y: 300 },
+                { x: 100, y: 550 }, { x: 500, y: 550 }
+            ];
+
+            const phaseColors = {
+                'Idéation': '#9333ea', 'MVP': '#2563eb', 'Beta': '#f59e0b',
+                'Scaling': '#10b981', 'Development': '#06b6d4', 'Launch': '#ec4899'
+            };
+
+            let svgLines = '';
+            const connections = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]];
+
+            connections.forEach(([from, to]) => {
+                if (steps[from] && steps[to]) {
+                    const x1 = positions[from].x + 150;
+                    const y1 = positions[from].y + 60;
+                    const x2 = positions[to].x + 150;
+                    const y2 = positions[to].y + 60;
+                    const color = phaseColors[steps[from].phase] || '#40916c';
+                    svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="connection-line" stroke="${color}" />`;
+                }
+            });
+
+            let nodesHtml = `<svg class="roadmap-connections" style="width:1000px; height:800px;">${svgLines}</svg>`;
+            
+            steps.forEach((step, index) => {
+                const pos = positions[index] || {x: 0, y: 0};
+                const phaseClass = `phase-${step.phase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
+                nodesHtml += `
+                    <div class="roadmap-node ${phaseClass}" style="left: ${pos.x}px; top: ${pos.y}px; animation-delay: ${index * 0.1}s;">
+                        <div class="node-number">${index + 1}</div>
+                        <div class="node-title">${step.title}</div>
+                        <div class="node-desc">${step.desc}</div>
+                        <div class="node-phase-badge">${step.phase}</div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = `<div style="position: relative; width: 900px; height: 750px; margin: auto;">${nodesHtml}</div>`;
+        }
+
+        function closeRoadmap() {
+            document.getElementById('roadmapModal').classList.remove('active');
+        }
+
+        async function exportRoadmapPDF() {
+            const { jsPDF } = window.jspdf;
+            const roadmapContent = document.getElementById('roadmapContent');
+
+            try {
+                const canvas = await html2canvas(roadmapContent, {
+                    scale: 2,
+                    backgroundColor: isDarkMode ? '#051005' : '#f0fdf4',
+                    width: roadmapContent.scrollWidth,
+                    height: roadmapContent.scrollHeight
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 277;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save('ThinkSpace-Roadmap.pdf');
+
+                alert('✅ Roadmap exportée en PDF !');
+            } catch (e) {
+                alert('❌ Erreur lors de l\'export PDF');
+                console.error(e);
             }
         }
 
@@ -268,34 +810,34 @@
             }
 
             try {
-                // Informer le backend de supprimer la session
                 await fetch('http://localhost:8000/clear-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sessionId)
                 });
             } catch (e) {
-                console.error('Erreur lors du nettoyage de session:', e);
+                console.error(e);
             }
 
-            // Générer un nouveau session ID
             sessionId = generateSessionId();
-            console.log('🆕 Nouvelle session:', sessionId);
+            conversationHistory = [];
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('roadmapBtn').style.display = 'none';
+            
+            const header = document.getElementById('headerSection');
+            header.classList.remove('header-hidden');
 
-            // Vider l'historique visuel
-            const historyDiv = document.getElementById('chatHistory');
-            historyDiv.innerHTML = '';
-            historyDiv.classList.add('hidden');
-
-            // Vider le champ de saisie
             document.getElementById('userInput').value = "";
             document.getElementById('userInput').focus();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Charger le thème au démarrage
         window.onload = () => {
             const saved = localStorage.getItem('theme');
             if(saved === 'light') toggleTheme();
+            
+            document.getElementById('userInput').focus();
         };
     </script>
 </body>
