@@ -23,6 +23,8 @@
         }
         .light-mode .accent-text { color: #2d6a4f; }
         .light-mode .btn-primary { background: #40916c; color: white; }
+        .light-mode .message-user { background: rgba(64, 145, 108, 0.1); border-left: 3px solid #40916c; }
+        .light-mode .message-ai { background: rgba(45, 106, 79, 0.05); border-left: 3px solid #2d6a4f; }
 
         .dark-mode {
             background: radial-gradient(circle at top, #132a13 0%, #051005 100%);
@@ -40,6 +42,8 @@
             border: 1px solid rgba(149, 213, 178, 0.2);
             color: #d8f3dc;
         }
+        .dark-mode .message-user { background: rgba(45, 106, 79, 0.2); border-left: 3px solid #95d5b2; }
+        .dark-mode .message-ai { background: rgba(13, 26, 13, 0.4); border-left: 3px solid #40916c; }
 
         .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .hover-lift:hover { transform: translateY(-3px); }
@@ -59,6 +63,23 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .message-user, .message-ai {
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .chat-history {
+            max-height: 500px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="dark-mode min-h-screen flex flex-col items-center p-6 md:p-12">
@@ -77,6 +98,11 @@
             <p class="text-lg opacity-60 font-light">L'intelligence artificielle au service de vos idées les plus folles.</p>
         </div>
 
+        <!-- HISTORIQUE DES MESSAGES -->
+        <div id="chatHistory" class="hidden glass-card rounded-[2rem] p-6 chat-history custom-scrollbar space-y-3">
+            <!-- Les messages s'afficheront ici -->
+        </div>
+
         <div class="glass-card p-2 rounded-[2rem] shadow-2xl">
             <div class="p-6 space-y-4">
                 <textarea 
@@ -87,7 +113,16 @@
                 ></textarea>
                 
                 <div class="flex items-center justify-between pt-4 border-t border-white/10">
-                    <span class="text-xs opacity-40"><i class="fa-regular fa-keyboard mr-2"></i>Ctrl + Entrée pour lancer</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs opacity-40"><i class="fa-regular fa-keyboard mr-2"></i>Ctrl + Entrée pour lancer</span>
+                        <button 
+                            onclick="clearConversation()" 
+                            class="text-xs opacity-40 hover:opacity-80 hover:text-red-400 transition-all"
+                            title="Nouvelle conversation"
+                        >
+                            <i class="fa-solid fa-broom mr-1"></i>Réinitialiser
+                        </button>
+                    </div>
                     <button 
                         onclick="sendToAI()" 
                         id="btn"
@@ -110,27 +145,20 @@
                 <span class="text-sm font-medium">L'IA tisse des liens...</span>
             </div>
         </div>
-
-        <div id="responseArea" class="hidden glass-card rounded-[2rem] overflow-hidden transition-all duration-700">
-            <div class="bg-white/5 p-4 flex justify-between items-center border-b border-white/5">
-                <span class="flex items-center gap-2 text-sm font-bold uppercase tracking-widest opacity-70">
-                    <i class="fa-solid fa-sparkles text-green-500"></i> Résultat
-                </span>
-                <div class="flex gap-2">
-                    <button onclick="copyResponse()" id="copyBtn" class="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Copier">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                    <button onclick="clearResponse()" class="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors" title="Effacer">
-                        <i class="fa-regular fa-trash-can"></i>
-                    </button>
-                </div>
-            </div>
-            <div id="aiContent" class="p-8 leading-relaxed text-lg font-normal opacity-90 font-sans whitespace-pre-wrap"></div>
-        </div>
     </div>
 
     <script>
         let isDarkMode = true;
+        let sessionId = null; // Identifiant de session unique
+
+        // Générer un ID de session au chargement
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Initialiser la session
+        sessionId = generateSessionId();
+        console.log('🆔 Session ID:', sessionId);
 
         function toggleTheme() {
             const body = document.body;
@@ -141,6 +169,31 @@
             body.classList.toggle('light-mode', !isDarkMode);
             icon.className = isDarkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        }
+
+        // Afficher un message dans l'historique
+        function addMessageToHistory(content, isUser = true) {
+            const historyDiv = document.getElementById('chatHistory');
+            historyDiv.classList.remove('hidden');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'message-user' : 'message-ai';
+            
+            const icon = isUser 
+                ? '<i class="fa-solid fa-user text-green-500 mr-2"></i>' 
+                : '<i class="fa-solid fa-robot text-green-400 mr-2"></i>';
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start gap-2">
+                    ${icon}
+                    <div class="flex-1 whitespace-pre-wrap">${content}</div>
+                </div>
+            `;
+            
+            historyDiv.appendChild(messageDiv);
+            
+            // Scroll automatique vers le bas
+            historyDiv.scrollTop = historyDiv.scrollHeight;
         }
 
         // Ecouteur pour Ctrl + Entrée
@@ -163,9 +216,14 @@
                 return;
             }
 
+            // Ajouter le message utilisateur à l'historique
+            addMessageToHistory(prompt, true);
+
+            // Vider le champ de saisie
+            input.value = "";
+
             // UI Loading State
             document.getElementById('loadingIndicator').classList.remove('hidden');
-            document.getElementById('responseArea').classList.add('hidden');
             btn.disabled = true;
             btnText.innerText = "Réflexion...";
             btnIcon.className = "fa-solid fa-spinner fa-spin";
@@ -174,22 +232,23 @@
                 const response = await fetch('http://localhost:8000/brainstorm', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt })
+                    body: JSON.stringify({ 
+                        prompt: prompt,
+                        session_id: sessionId  // ← Envoyer l'ID de session
+                    })
                 });
 
                 if (!response.ok) throw new Error('Erreur serveur');
 
                 const data = await response.json();
                 
-                const area = document.getElementById('responseArea');
-                const content = document.getElementById('aiContent');
-                
-                content.innerText = data.response;
-                area.classList.remove('hidden');
-                area.classList.add('fade-in');
-                
-                // Scroll fluide vers le bas
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                // Mettre à jour le session_id si le serveur en renvoie un nouveau
+                if (data.session_id) {
+                    sessionId = data.session_id;
+                }
+
+                // Ajouter la réponse de l'IA à l'historique
+                addMessageToHistory(data.response, false);
 
             } catch (e) {
                 alert("Erreur: Impossible de contacter le serveur. Vérifiez que votre backend tourne sur le port 8000.");
@@ -199,29 +258,36 @@
                 btn.disabled = false;
                 btnText.innerText = "Brainstormer";
                 btnIcon.className = "fa-solid fa-wand-magic-sparkles";
+                input.focus();
             }
         }
 
-        function copyResponse() {
-            const text = document.getElementById('aiContent').innerText;
-            const copyBtn = document.getElementById('copyBtn');
-            
-            if (!text) return;
+        async function clearConversation() {
+            if (!confirm('Voulez-vous vraiment commencer une nouvelle conversation ?')) {
+                return;
+            }
 
-            navigator.clipboard.writeText(text).then(() => {
-                const originalIcon = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i>';
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalIcon;
-                }, 2000);
-            }).catch(err => {
-                console.error('Erreur lors de la copie : ', err);
-            });
-        }
+            try {
+                // Informer le backend de supprimer la session
+                await fetch('http://localhost:8000/clear-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionId)
+                });
+            } catch (e) {
+                console.error('Erreur lors du nettoyage de session:', e);
+            }
 
-        function clearResponse() {
-            document.getElementById('responseArea').classList.add('hidden');
-            document.getElementById('aiContent').innerText = "";
+            // Générer un nouveau session ID
+            sessionId = generateSessionId();
+            console.log('🆕 Nouvelle session:', sessionId);
+
+            // Vider l'historique visuel
+            const historyDiv = document.getElementById('chatHistory');
+            historyDiv.innerHTML = '';
+            historyDiv.classList.add('hidden');
+
+            // Vider le champ de saisie
             document.getElementById('userInput').value = "";
             document.getElementById('userInput').focus();
         }
