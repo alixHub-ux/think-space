@@ -19,7 +19,8 @@ app = FastAPI(title="Think-Space API")
 # Configuration CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # On corrigera ça après
+    allow_origins=["*"], # Le "*" signifie "Autoriser tout le monde" (parfait pour ton rendu)
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
