@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Think-Space | Brainstorming IA</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -542,7 +543,7 @@
         btnIcon.className = "fa-solid fa-spinner fa-spin";
         addLoadingIndicator();
         try {
-            const response = await fetch('http://localhost:8000/brainstorm', {
+            const response = await fetch('https://think-space-d8ny.onrender.com/brainstorm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: prompt, session_id: sessionId })
@@ -577,7 +578,7 @@
         content.innerHTML = '<div class="text-center py-12"><div class="loading-dots mx-auto"><span></span><span></span><span></span></div></div>';
         modal.classList.add('active');
         try {
-            const response = await fetch('http://localhost:8000/brainstorm', {
+            const response = await fetch('https://think-space-d8ny.onrender.com/brainstorm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: roadmapPrompt, session_id: sessionId + '_roadmap' })
