@@ -216,7 +216,7 @@ Lorsque la réponse est fournie :
 
 @app.post("/brainstorm")
 async def brainstorm(query: Query):
-    logger.info(f"📩 Requête reçue: {query.prompt[:50]}...")
+    logger.info(f" Requête reçue: {query.prompt[:50]}...")
     
     if client is None:
         logger.error("Client Groq non initialisé")
@@ -229,12 +229,12 @@ async def brainstorm(query: Query):
     session_id = query.session_id
     if not session_id:
         session_id = str(uuid.uuid4())
-        logger.info(f"🆕 Nouvelle session créée: {session_id}")
+        logger.info(f" Nouvelle session créée: {session_id}")
     
     # Initialiser l'historique si la session n'existe pas
     if session_id not in conversations:
         conversations[session_id] = []
-        logger.info(f"💬 Nouvelle conversation initialisée pour session: {session_id}")
+        logger.info(f" Nouvelle conversation initialisée pour session: {session_id}")
     
     # Ajouter le message utilisateur à l'historique
     conversations[session_id].append({
@@ -242,14 +242,14 @@ async def brainstorm(query: Query):
         "content": query.prompt
     })
     
-    logger.info(f"📝 Historique actuel: {len(conversations[session_id])} messages")
+    logger.info(f" Historique actuel: {len(conversations[session_id])} messages")
     
     MODEL_ENV = "GROQ_MODEL"
     model = os.getenv(MODEL_ENV, "llama-3.3-70b-versatile")
-    logger.info(f"🤖 Utilisation du modèle: {model}")
+    logger.info(f" Utilisation du modèle: {model}")
     
     try:
-        logger.info("🚀 Envoi de la requête à Groq...")
+        logger.info(" Envoi de la requête à Groq...")
         
         # Construire les messages avec le système + historique complet
         messages = [
