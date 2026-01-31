@@ -172,16 +172,14 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 200;
-            padding: 2rem;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            padding: 1rem;
             overflow-y: auto;
         }
 
         .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
             animation: fadeIn 0.3s ease-out;
         }
 
@@ -191,29 +189,27 @@
         }
 
         .modal-content {
-            max-width: 1400px;
+            max-width: 95%;
             width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
+            margin: 2rem auto;
+            position: relative;
         }
 
         .roadmap-canvas {
             position: relative;
-            min-height: 600px;
-            padding: 3rem;
+            min-height: 400px;
+            padding: 2rem;
+            background: inherit;
         }
 
         .roadmap-node {
-            position: absolute;
             padding: 1.25rem 1.75rem;
             border-radius: 1rem;
             min-width: 200px;
-            max-width: 280px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             animation: nodeAppear 0.6s ease-out forwards;
-            opacity: 0;
         }
 
         .roadmap-node:hover {
@@ -298,31 +294,11 @@
             margin-top: 0.5rem;
         }
 
-        .roadmap-connections {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .connection-line {
-            stroke-width: 2;
-            stroke-dasharray: 5, 5;
-            opacity: 0.6;
-            animation: dash 20s linear infinite;
-        }
-
-        @keyframes dash {
-            to { stroke-dashoffset: -1000; }
-        }
-
         .btn-roadmap {
             position: fixed;
-            bottom: 120px;
+            bottom: 150px;
             right: 2rem;
-            z-index: 150;
+            z-index: 101;
             animation: pulse 2s infinite;
             cursor: pointer;
         }
@@ -409,21 +385,21 @@
 
     <div id="roadmapModal" class="modal">
         <div class="modal-content glass-card rounded-3xl">
-            <div class="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-inherit z-10 rounded-t-3xl">
+            <div class="p-4 md:p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-inherit z-10 rounded-t-3xl">
                 <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-route text-3xl text-green-400"></i>
+                    <i class="fa-solid fa-route text-2xl md:text-3xl text-green-400"></i>
                     <div>
-                        <h2 class="text-2xl font-bold">Roadmap d'Exécution</h2>
-                        <p class="text-sm opacity-60">Plan stratégique généré par l'IA</p>
+                        <h2 class="text-xl md:text-2xl font-bold">Roadmap d'Exécution</h2>
+                        <p class="text-xs md:text-sm opacity-60">Plan stratégique généré par l'IA</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <!-- <button onclick="exportRoadmapPDF()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-all hover-lift">
+                    <button onclick="exportRoadmapPDF()" class="px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-all hover-lift text-sm">
                         <i class="fa-solid fa-download"></i>
-                        Export PDF
-                    </button> -->
-                    <button onclick="closeRoadmap()" class="px-4 py-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all">
-                        <i class="fa-solid fa-times"></i>
+                        <span class="hidden md:inline">Export PDF</span>
+                    </button>
+                    <button onclick="closeRoadmap()" class="px-3 md:px-4 py-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all">
+                        <i class="fa-solid fa-times text-xl"></i>
                     </button>
                 </div>
             </div>
@@ -433,412 +409,260 @@
     </div>
 
     <script>
-        let isDarkMode = true;
-        let sessionId = null;
-        let isTyping = false;
-        let conversationHistory = [];
+    let isDarkMode = true;
+    let sessionId = null;
+    let isTyping = false;
+    let conversationHistory = [];
 
-        function generateSessionId() {
-            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    function generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    sessionId = generateSessionId();
+
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('themeIcon');
+        isDarkMode = !isDarkMode;
+        
+        body.classList.toggle('dark-mode', isDarkMode);
+        body.classList.toggle('light-mode', !isDarkMode);
+        icon.className = isDarkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    }
+
+    function hideHeader() {
+        const header = document.getElementById('headerSection');
+        if (header && !header.classList.contains('header-hidden')) {
+            header.classList.add('header-hidden');
         }
+    }
 
-        sessionId = generateSessionId();
-
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('themeIcon');
-            isDarkMode = !isDarkMode;
-            
-            body.classList.toggle('dark-mode', isDarkMode);
-            body.classList.toggle('light-mode', !isDarkMode);
-            icon.className = isDarkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    function showRoadmapButton() {
+        const btn = document.getElementById('roadmapBtn');
+        if (conversationHistory.length >= 2) {
+            btn.style.display = 'flex';
         }
+    }
 
-        function hideHeader() {
-            const header = document.getElementById('headerSection');
-            if (header && !header.classList.contains('header-hidden')) {
-                header.classList.add('header-hidden');
-            }
-        }
-
-        function showRoadmapButton() {
-            const btn = document.getElementById('roadmapBtn');
-            if (conversationHistory.length >= 2) {
-                btn.style.display = 'flex';
-            }
-        }
-
-        function addUserMessage(content) {
-            hideHeader();
-            conversationHistory.push({ role: 'user', content });
-            showRoadmapButton();
-            
-            const chatDiv = document.getElementById('chatMessages');
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-user';
-            messageDiv.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <div class="flex-1 pt-1">
-                        <div class="font-semibold text-sm opacity-60 mb-1 text-right">Vous</div>
-                        <div class="whitespace-pre-wrap leading-relaxed">${content}</div>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-user text-green-500 text-sm"></i>
-                    </div>
+    function addUserMessage(content) {
+        hideHeader();
+        conversationHistory.push({ role: 'user', content });
+        showRoadmapButton();
+        const chatDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-user';
+        messageDiv.innerHTML = `
+            <div class="flex items-start gap-3">
+                <div class="flex-1 pt-1">
+                    <div class="font-semibold text-sm opacity-60 mb-1 text-right">Vous</div>
+                    <div class="whitespace-pre-wrap leading-relaxed">${content}</div>
                 </div>
-            `;
-            
-            chatDiv.appendChild(messageDiv);
-            scrollToBottom();
-        }
-
-        async function addAIMessageTyping(content) {
-            hideHeader();
-            conversationHistory.push({ role: 'assistant', content });
-            showRoadmapButton();
-            
-            const chatDiv = document.getElementById('chatMessages');
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-ai';
-            messageDiv.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-robot text-green-400 text-sm"></i>
-                    </div>
-                    <div class="flex-1 pt-1">
-                        <div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div>
-                        <div class="whitespace-pre-wrap leading-relaxed" id="typingContent"></div>
-                    </div>
+                <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-user text-green-500 text-sm"></i>
                 </div>
-            `;
-            
-            chatDiv.appendChild(messageDiv);
-            
-            const typingContent = messageDiv.querySelector('#typingContent');
-            let index = 0;
-            const speed = 15;
-            
-            return new Promise((resolve) => {
-                function typeChar() {
-                    if (index < content.length) {
-                        typingContent.textContent += content.charAt(index);
-                        index++;
-                        scrollToBottom();
-                        setTimeout(typeChar, speed);
-                    } else {
-                        resolve();
-                    }
-                }
-                typeChar();
-            });
-        }
+            </div>`;
+        chatDiv.appendChild(messageDiv);
+        scrollToBottom();
+    }
 
-        function addLoadingIndicator() {
-            hideHeader();
-            const chatDiv = document.getElementById('chatMessages');
-            
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'loadingIndicator';
-            loadingDiv.className = 'message-ai';
-            loadingDiv.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-robot text-green-400 text-sm"></i>
-                    </div>
-                    <div class="flex-1 pt-1">
-                        <div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div>
-                        <div class="loading-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
+    async function addAIMessageTyping(content) {
+        hideHeader();
+        conversationHistory.push({ role: 'assistant', content });
+        showRoadmapButton();
+        const chatDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-ai';
+        messageDiv.innerHTML = `
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-robot text-green-400 text-sm"></i>
                 </div>
-            `;
-            
-            chatDiv.appendChild(loadingDiv);
-            scrollToBottom();
-        }
-
-        function removeLoadingIndicator() {
-            const loading = document.getElementById('loadingIndicator');
-            if (loading) loading.remove();
-        }
-
-        function scrollToBottom() {
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
-
-        document.getElementById('userInput').addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                sendToAI();
+                <div class="flex-1 pt-1">
+                    <div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div>
+                    <div class="whitespace-pre-wrap leading-relaxed" id="typingContent"></div>
+                </div>
+            </div>`;
+        chatDiv.appendChild(messageDiv);
+        const typingContent = messageDiv.querySelector('#typingContent');
+        let index = 0;
+        const speed = 15;
+        return new Promise((resolve) => {
+            function typeChar() {
+                if (index < content.length) {
+                    typingContent.textContent += content.charAt(index);
+                    index++;
+                    scrollToBottom();
+                    setTimeout(typeChar, speed);
+                } else { resolve(); }
             }
+            typeChar();
         });
+    }
 
-        async function sendToAI() {
-            if (isTyping) return;
+    function addLoadingIndicator() {
+        hideHeader();
+        const chatDiv = document.getElementById('chatMessages');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loadingIndicator';
+        loadingDiv.className = 'message-ai';
+        loadingDiv.innerHTML = `<div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-green-400/20 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot text-green-400 text-sm"></i></div>
+            <div class="flex-1 pt-1"><div class="font-semibold text-sm opacity-60 mb-1">Think-Space</div><div class="loading-dots"><span></span><span></span><span></span></div></div>
+        </div>`;
+        chatDiv.appendChild(loadingDiv);
+        scrollToBottom();
+    }
 
-            const input = document.getElementById('userInput');
-            const btn = document.getElementById('btn');
-            const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
-            const prompt = input.value.trim();
+    function removeLoadingIndicator() {
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) loading.remove();
+    }
 
-            if (!prompt) {
-                input.focus();
-                return;
-            }
+    function scrollToBottom() {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
 
-            addUserMessage(prompt);
-            input.value = "";
+    document.getElementById('userInput').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); sendToAI(); }
+    });
 
-            btn.disabled = true;
-            btnText.innerText = "Réflexion...";
-            btnIcon.className = "fa-solid fa-spinner fa-spin";
-
-            addLoadingIndicator();
-
-            try {
-                const response = await fetch('http://localhost:8000/brainstorm', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: prompt,
-                        session_id: sessionId
-                    })
-                });
-
-                if (!response.ok) throw new Error('Erreur serveur');
-
-                const data = await response.json();
-                
-                if (data.session_id) {
-                    sessionId = data.session_id;
-                }
-
-                removeLoadingIndicator();
-
-                isTyping = true;
-                await addAIMessageTyping(data.response);
-                isTyping = false;
-
-            } catch (e) {
-                removeLoadingIndicator();
-                alert("Erreur: Impossible de contacter le serveur. Vérifiez que votre backend tourne sur le port 8000.");
-                console.error(e);
-            } finally {
-                btn.disabled = false;
-                btnText.innerText = "Envoyer";
-                btnIcon.className = "fa-solid fa-paper-plane";
-                input.focus();
-            }
+    async function sendToAI() {
+        if (isTyping) return;
+        const input = document.getElementById('userInput');
+        const btn = document.getElementById('btn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const prompt = input.value.trim();
+        if (!prompt) { input.focus(); return; }
+        addUserMessage(prompt);
+        input.value = "";
+        btn.disabled = true;
+        btnText.innerText = "Réflexion...";
+        btnIcon.className = "fa-solid fa-spinner fa-spin";
+        addLoadingIndicator();
+        try {
+            const response = await fetch('http://localhost:8000/brainstorm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt, session_id: sessionId })
+            });
+            if (!response.ok) throw new Error('Erreur serveur');
+            const data = await response.json();
+            if (data.session_id) sessionId = data.session_id;
+            removeLoadingIndicator();
+            isTyping = true;
+            await addAIMessageTyping(data.response);
+            isTyping = false;
+        } catch (e) {
+            removeLoadingIndicator();
+            alert("Erreur serveur.");
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = "Envoyer";
+            btnIcon.className = "fa-solid fa-paper-plane";
+            input.focus();
         }
+    }
 
-        async function generateRoadmap() {
-            if (conversationHistory.length < 2) {
-                alert("Discutez d'abord d'une idée pour générer une roadmap !");
-                return;
-            }
-
-            const context = conversationHistory
-                .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-                .join('\n\n');
-
-            const roadmapPrompt = `Basé sur notre conversation, génère une roadmap d'exécution concrète.
-
-Contexte:
-${context}
-
-Génère EXACTEMENT 6 étapes au format suivant (STRICTEMENT):
-
-STEP_1|Titre court|Phase|Description en 1 phrase|Dépendances séparées par virgule
-STEP_2|Titre court|Phase|Description en 1 phrase|Dépendances séparées par virgule
-...
-
-Phases possibles: Idéation, MVP, Beta, Scaling, Development, Launch
-
-Exemple:
-STEP_1|Validation du concept|Idéation|Étude de marché et interviews utilisateurs|Aucune
-STEP_2|Développement MVP|MVP|Backend API + Interface utilisateur basique|Validation du concept
-STEP_3|Tests utilisateurs|Beta|100 utilisateurs beta testeurs|Développement MVP
-STEP_4|Optimisation|Development|Amélioration basée sur feedback|Tests utilisateurs
-STEP_5|Lancement public|Launch|Campagne marketing et ouverture|Optimisation
-STEP_6|Scaling|Scaling|Expansion géographique|Lancement public
-
-Génère maintenant les 6 étapes pour notre projet:`;
-
-            const modal = document.getElementById('roadmapModal');
-            const content = document.getElementById('roadmapContent');
-            content.innerHTML = '<div class="text-center py-12"><div class="loading-dots mx-auto"><span></span><span></span><span></span></div><p class="mt-4 opacity-60">Génération de la roadmap...</p></div>';
-            modal.classList.add('active');
-
-            try {
-                const response = await fetch('http://localhost:8000/brainstorm', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: roadmapPrompt,
-                        session_id: sessionId + '_roadmap'
-                    })
-                });
-
-                if (!response.ok) throw new Error('Erreur serveur');
-
-                const data = await response.json();
-                displayRoadmapGraph(data.response);
-
-            } catch (e) {
-                content.innerHTML = '<div class="text-center py-12 text-red-400"><i class="fa-solid fa-exclamation-triangle text-4xl mb-4"></i><p>Erreur lors de la génération</p></div>';
-                console.error(e);
-            }
+    async function generateRoadmap() {
+        if (conversationHistory.length < 2) {
+            alert("Discutez d'abord d'une idée !");
+            return;
         }
+        const context = conversationHistory.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n\n');
+        const roadmapPrompt = `Génère une roadmap de 6 étapes. Format STRICT: STEP_X|Titre|Phase|Description|Dépendances. Phases: Idéation, MVP, Beta, Scaling, Development, Launch.\n\nContexte:\n${context}`;
+        const modal = document.getElementById('roadmapModal');
+        const content = document.getElementById('roadmapContent');
+        content.innerHTML = '<div class="text-center py-12"><div class="loading-dots mx-auto"><span></span><span></span><span></span></div></div>';
+        modal.classList.add('active');
+        try {
+            const response = await fetch('http://localhost:8000/brainstorm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: roadmapPrompt, session_id: sessionId + '_roadmap' })
+            });
+            const data = await response.json();
+            displayRoadmapGraph(data.response);
+        } catch (e) { console.error(e); }
+    }
 
-        function displayRoadmapGraph(roadmapText) {
-            const content = document.getElementById('roadmapContent');
+    function displayRoadmapGraph(roadmapText) {
+        const content = document.getElementById('roadmapContent');
+        const lines = roadmapText.split('\n').filter(l => l.trim().startsWith('STEP_'));
+        const steps = lines.map(line => {
+            const parts = line.split('|');
+            return parts.length >= 4 ? { title: parts[1], phase: parts[2], desc: parts[3] } : null;
+        }).filter(s => s !== null);
+
+        let nodesHtml = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+        
+        steps.forEach((step, index) => {
+            const phaseClass = `phase-${step.phase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
+            nodesHtml += `
+                <div class="roadmap-node ${phaseClass} relative" style="animation-delay: ${index * 0.1}s;">
+                    <div class="node-number">${index + 1}</div>
+                    <div class="node-title">${step.title}</div>
+                    <div class="node-desc">${step.desc}</div>
+                    <div class="node-phase-badge">${step.phase}</div>
+                </div>`;
+        });
+        nodesHtml += `</div>`;
+        content.innerHTML = nodesHtml;
+    }
+
+    function closeRoadmap() { 
+        document.getElementById('roadmapModal').classList.remove('active'); 
+    }
+
+    async function exportRoadmapPDF() {
+        const roadmapContent = document.getElementById('roadmapContent');
+        const { jsPDF } = window.jspdf;
+
+        try {
+            const bgColor = isDarkMode ? '#0a1f0a' : '#ffffff';
             
-            const lines = roadmapText.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.startsWith('STEP_'));
-
-            const steps = lines.map(line => {
-                const parts = line.split('|');
-                if (parts.length >= 5) {
-                    return {
-                        title: parts[1].trim(),
-                        phase: parts[2].trim(),
-                        desc: parts[3].trim(),
-                        deps: parts[4].trim()
-                    };
-                }
-                return null;
-            }).filter(s => s !== null);
-
-            if (steps.length === 0) {
-                content.innerHTML = '<div class="text-center py-12 text-yellow-400"><p>L\'IA n\'a pas retourné le format attendu. Réessayez.</p></div>';
-                return;
-            }
-
-            const positions = [
-                { x: 100, y: 50 },  { x: 500, y: 50 },
-                { x: 100, y: 300 }, { x: 500, y: 300 },
-                { x: 100, y: 550 }, { x: 500, y: 550 }
-            ];
-
-            const phaseColors = {
-                'Idéation': '#9333ea', 'MVP': '#2563eb', 'Beta': '#f59e0b',
-                'Scaling': '#10b981', 'Development': '#06b6d4', 'Launch': '#ec4899'
-            };
-
-            let svgLines = '';
-            const connections = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]];
-
-            connections.forEach(([from, to]) => {
-                if (steps[from] && steps[to]) {
-                    const x1 = positions[from].x + 150;
-                    const y1 = positions[from].y + 60;
-                    const x2 = positions[to].x + 150;
-                    const y2 = positions[to].y + 60;
-                    const color = phaseColors[steps[from].phase] || '#40916c';
-                    svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="connection-line" stroke="${color}" />`;
-                }
+            const canvas = await html2canvas(roadmapContent, {
+                scale: 3,
+                backgroundColor: bgColor,
+                useCORS: true,
+                logging: false,
+                width: roadmapContent.scrollWidth,
+                height: roadmapContent.scrollHeight
             });
 
-            let nodesHtml = `<svg class="roadmap-connections" style="width:1000px; height:800px;">${svgLines}</svg>`;
-            
-            steps.forEach((step, index) => {
-                const pos = positions[index] || {x: 0, y: 0};
-                const phaseClass = `phase-${step.phase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
-                nodesHtml += `
-                    <div class="roadmap-node ${phaseClass}" style="left: ${pos.x}px; top: ${pos.y}px; animation-delay: ${index * 0.1}s;">
-                        <div class="node-number">${index + 1}</div>
-                        <div class="node-title">${step.title}</div>
-                        <div class="node-desc">${step.desc}</div>
-                        <div class="node-phase-badge">${step.phase}</div>
-                    </div>
-                `;
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
             });
 
-            content.innerHTML = `<div style="position: relative; width: 900px; height: 750px; margin: auto;">${nodesHtml}</div>`;
-        }
-
-        function closeRoadmap() {
-            document.getElementById('roadmapModal').classList.remove('active');
-        }
-
-        async function exportRoadmapPDF() {
-            const { jsPDF } = window.jspdf;
-            const roadmapContent = document.getElementById('roadmapContent');
-
-            try {
-                const canvas = await html2canvas(roadmapContent, {
-                    scale: 2,
-                    backgroundColor: isDarkMode ? '#051005' : '#f0fdf4',
-                    width: roadmapContent.scrollWidth,
-                    height: roadmapContent.scrollHeight
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                const imgWidth = 277;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                pdf.save('ThinkSpace-Roadmap.pdf');
-
-                alert('✅ Roadmap exportée en PDF !');
-            } catch (e) {
-                alert('❌ Erreur lors de l\'export PDF');
-                console.error(e);
-            }
-        }
-
-        async function clearConversation() {
-            if (!confirm('Voulez-vous vraiment commencer une nouvelle conversation ?')) {
-                return;
-            }
-
-            try {
-                await fetch('http://localhost:8000/clear-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sessionId)
-                });
-            } catch (e) {
-                console.error(e);
-            }
-
-            sessionId = generateSessionId();
-            conversationHistory = [];
-            document.getElementById('chatMessages').innerHTML = '';
-            document.getElementById('roadmapBtn').style.display = 'none';
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save('ThinkSpace-Roadmap.pdf');
             
-            const header = document.getElementById('headerSection');
-            header.classList.remove('header-hidden');
-
-            document.getElementById('userInput').value = "";
-            document.getElementById('userInput').focus();
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            alert('✅ PDF exporté avec succès !');
+        } catch (e) {
+            console.error(e);
+            alert('❌ Erreur lors de l\'export PDF');
         }
+    }
 
-        window.onload = () => {
-            const saved = localStorage.getItem('theme');
-            if(saved === 'light') toggleTheme();
-            
-            document.getElementById('userInput').focus();
-        };
+    async function clearConversation() {
+        if (!confirm('Recommencer ?')) return;
+        sessionId = generateSessionId();
+        conversationHistory = [];
+        document.getElementById('chatMessages').innerHTML = '';
+        document.getElementById('roadmapBtn').style.display = 'none';
+        document.getElementById('headerSection').classList.remove('header-hidden');
+        document.getElementById('userInput').value = "";
+    }
+
+    window.onload = () => {
+        const saved = localStorage.getItem('theme');
+        if(saved === 'light') toggleTheme();
+        document.getElementById('userInput').focus();
+    };
     </script>
 </body>
 </html>

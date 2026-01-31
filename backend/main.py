@@ -32,14 +32,14 @@ logger.info(f"API Key présente: {bool(api_key)}")
 
 if not api_key:
     client = None
-    logger.warning("⚠️ Pas de clé API Groq trouvée!")
+    logger.warning(" Pas de clé API Groq trouvée!")
 else:
     try:
         client = Groq(api_key=api_key)
-        logger.info("✅ Client Groq initialisé avec succès")
+        logger.info(" Client Groq initialisé avec succès")
     except Exception as e:
         client = None
-        logger.error(f"❌ Erreur lors de l'initialisation du client Groq: {e}")
+        logger.error(f" Erreur lors de l'initialisation du client Groq: {e}")
 
 
 # ===== NOUVEAU : SYSTÈME DE GESTION DE SESSIONS =====
@@ -264,7 +264,7 @@ async def brainstorm(query: Query):
         
         # Extraction de la réponse
         resp = completion.choices[0].message.content
-        logger.info(f"✅ Réponse reçue: {len(resp)} caractères")
+        logger.info(f" Réponse reçue: {len(resp)} caractères")
         
         # Ajouter la réponse de l'assistant à l'historique
         conversations[session_id].append({
@@ -278,7 +278,7 @@ async def brainstorm(query: Query):
         }
         
     except Exception as e:
-        logger.exception("❌ ERREUR COMPLÈTE:")
+        logger.exception(" ERREUR COMPLÈTE:")
         err_str = str(e)
         
         if "model" in err_str.lower() and ("not found" in err_str.lower() or "decommissioned" in err_str.lower()):
@@ -298,7 +298,7 @@ async def clear_session(session_id: str):
     """Endpoint pour effacer l'historique d'une session"""
     if session_id in conversations:
         del conversations[session_id]
-        logger.info(f"🗑️ Session {session_id} effacée")
+        logger.info(f" Session {session_id} effacée")
         return {"message": "Session cleared"}
     return {"message": "Session not found"}
 
